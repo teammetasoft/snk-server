@@ -1,18 +1,21 @@
-# Use Node.js LTS version
-FROM node:20-alpine
+FROM node:22 AS build-env
 
-# Set working directory inside container
 WORKDIR /app
 
-# Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install --production
 
-# Copy the rest of the application
+RUN npm ci --omit=dev
+
 COPY . .
 
-# Expose the port your app runs on
+FROM gcr.io/distroless/nodejs22-debian12
+
+COPY --from=build-env /app /app
+
+WORKDIR /app
+
+USER nonroot:nonroot
+
 EXPOSE 4000
 
-# Start the app
-CMD ["node", "app.js"]
+CMD ["app.js"]
