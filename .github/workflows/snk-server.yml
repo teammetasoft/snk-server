@@ -1,0 +1,54 @@
+name: Deploy-SNK Server
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  DOCKER_IMAGE_LOCAL_NAME: snk-server
+  DOCKER_IMAGE_NAME: 110103457637.dkr.ecr.ap-south-1.amazonaws.com/snk-server:latest
+  AWS_REGION: ap-south-1
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t ${{ env.DOCKER_IMAGE_LOCAL_NAME }} .
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+          docker login --username AWS --password-stdin 110103457637.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+      - name: Tag Docker image
+        run: docker tag ${{ env.DOCKER_IMAGE_LOCAL_NAME }} ${{ env.DOCKER_IMAGE_NAME }}
+
+      - name: Push Docker image
+        run: docker push ${{ env.DOCKER_IMAGE_NAME }}
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: uat
+          key: ${{ secrets.TEST_SERVER_SSH_KEY }}
+          script: |
+            cd ~/teammetasoft/snk-server
+            docker compose pull || echo "Image not in ECR, using local build"
+            docker compose down
+            docker compose up -d --build
+            docker image prune -f
