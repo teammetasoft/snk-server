@@ -44,12 +44,7 @@ const UserSchema = mongoose.Schema(
     address: {
       type: String,
     },
-    propertyIds: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Property",
-      },
-    ],
+    
   },
   {
     // Add timestamps option
