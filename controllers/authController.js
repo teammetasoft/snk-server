@@ -15,6 +15,69 @@ const { sendOtpEmail } = require("../helpers/emailService");
 //Functions
 let refreshTokenArray = [];
 
+const signupEmail = async (req, res, next) => {
+  try {
+    const { name, email, phone } = req.body;
+    const existingUser = await User.findOne({
+      $or: [{ email }, { phone }],
+    });
+    if (existingUser)
+      return res
+        .status(409)
+        .json({ success: false, message: "Email or phone already registered" });
+    const otp = await buildOTP(email);
+    const mailResponse = await sendOtpEmail(
+      email,
+      otp,
+       "verify",
+      name
+    );
+
+    if (!mailResponse.success) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to send OTP via email" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent successfully to your registered email",
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+const signupPhone = async (req, res, next) => {
+  try {
+    const { name, phone } = req.body;
+    const existingUser = await User.findOne({
+      phone
+    });
+    if (existingUser)
+      return res
+        .status(409)
+        .json({ success: false, message: "Phone already registered" });
+    const otp = await buildOTP(phone);
+    const smsResponse = await sendSmsOtp(phone, otp, name);
+
+    if (!smsResponse.success) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to send OTP via sms" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent successfully to your registered phone",
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
 const signup = async (req, res, next) => {
   try {
     const { name, email, phone, password } = req.body;
@@ -43,20 +106,29 @@ const signup = async (req, res, next) => {
       phone,
       password: hashedPassword,
     });
+     const accessToken = await genAccessToken(newUser);
+      const refreshToken = await genRefreshToken(newUser);
+      refreshTokenArray.push(refreshToken);
 
-    res.status(201)
-    .cookie("accessToken", accessToken, {
-          httpOnly: true,
-          path: "/",
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-          sameSite: "strict",
-        })
-        .json({ success: true,  user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        phone: newUser.phone,
-      }, refreshToken,  message: "Signup successful! Logged in automatically." });
+    res
+      .status(201)
+      .cookie("accessToken", accessToken, {
+        httpOnly: true,
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        sameSite: "strict",
+      })
+      .json({
+        success: true,
+        user: {
+          id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          phone: newUser.phone,
+        },
+        refreshToken,
+        message: "Signup successful! Logged in automatically.",
+      });
   } catch (error) {
     console.error("Signup Error:", error);
     next(error);
@@ -297,19 +369,24 @@ const forgotPassword = async (req, res, next) => {
         throw createError.Unauthorized("Your Account Is Suspended");
 
       const name = user.name;
-     const otp= await buildOTP(email);
-     const mailResponse=  await sendOtpEmail(email, otp, (type = "reset"), name);
+      const otp = await buildOTP(email);
+      const mailResponse = await sendOtpEmail(
+        email,
+        otp,
+        (type = "reset"),
+        name
+      );
 
-    if (!mailResponse.success) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Failed to send OTP via email" });
-    }
+      if (!mailResponse.success) {
+        return res
+          .status(500)
+          .json({ success: false, message: "Failed to send OTP via email" });
+      }
 
-    return res.status(200).json({
-      success: true,
-      message: "OTP sent successfully to your registered email",
-    });
+      return res.status(200).json({
+        success: true,
+        message: "OTP sent successfully to your registered email",
+      });
     } else {
       res.status(200).json({ success: false, message: "user Not Found" });
     }
@@ -319,7 +396,7 @@ const forgotPassword = async (req, res, next) => {
   }
 };
 
-const verifyEmail = async (req, res) => {
+const verifyEmailPhone = async (req, res) => {
   try {
     const { identifier, otp } = req.body;
     const result = await verifyOtp(identifier, otp);
@@ -328,7 +405,7 @@ const verifyEmail = async (req, res) => {
       .status(200)
       .json({ success: true, message: "OTP verified successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error, message: "Server error" });
   }
 };
 const updateNewPassword = async (req, res, next) => {
@@ -348,8 +425,6 @@ const updateNewPassword = async (req, res, next) => {
         .status(404)
         .json({ success: false, message: "User not found" });
     }
-
-    
 
     const hashedPassword = await bcrypt.hash(pass, 10);
 
@@ -440,8 +515,11 @@ module.exports = {
   refreshToken,
   logout,
   forgotPassword,
-  verifyEmail,
+  verifyEmailPhone,
   updateNewPassword,
   googleAuth,
   verifyLoginOtp,
+  signup,
+  signupPhone,
+  signupEmail,
 };
