@@ -21,12 +21,17 @@ const UserSchema = mongoose.Schema(
     phone: {
       type: Number,
       // minlength: [10, "phone number must be 10 digits"],
-      // required: [true, "Phone number is required"]
+      required: [true, "Phone number is required"],
+      unique: true,
     },
     password: {
       type: String,
       minlength: [6, "Password must contain 6 letters"],
       required: [true, "Password is required"],
+    },
+    dob: {
+      type: Date,
+      required: [true, "Date of birth is required"],
     },
     coverImage: {
       type: String,
@@ -39,12 +44,16 @@ const UserSchema = mongoose.Schema(
       default: "active", // 'active', 'inactive'
     },
     role: {
-      type: String, // 'admin', 'manager', 'investor'
+      type: String, // 'admin', 'user'
     },
-    address: {
-      type: String,
+    emailVerified: {
+      type: Boolean,
+      default: false,
     },
-    
+    phoneVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     // Add timestamps option

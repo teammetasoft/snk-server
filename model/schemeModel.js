@@ -4,30 +4,28 @@ const SchemeSchema = mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "title is required"],
+      required: [true, "Title is required"],
     },
     image: {
       type: String,
-      required: [true, "image is required"],
+      required: [true, "Image is required"],
     },
     systemName: {
       type: String,
       required: [true, "System Name is required"],
     },
-    installmentPlans: {
-      type: Array,
-      required: [true, "Installment Plans is required"],
-    },
-    priceRange: {
-      min: {
-        type: Number,
-        required: [true, "Min Price is required"],
+    installmentPlans: [
+      {
+        value: {
+          type: Number,
+          required: [true, "Installment value is required"],
+        },
+        code: {
+          type: String,
+          required: [true, "Installment code is required"],
+        },
       },
-      max: {
-        type: Number,
-        required: [true, "Max Price is required"],
-      },
-    },
+    ],
     duration: {
       unit: {
         type: String,
@@ -55,6 +53,7 @@ const SchemeSchema = mongoose.Schema(
     timestamps: true,
   }
 );
+
 mongoose.set("strictQuery", false);
 
 const Scheme = mongoose.model("Scheme", SchemeSchema);

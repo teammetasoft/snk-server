@@ -44,6 +44,76 @@ const createScheme = async (req, res, next) => {
   }
 };
 
+
+const getAllSchemes = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    
+    const searchQuery = req.query.search
+      ? {
+          $or: [
+            { name: { $regex: req.query.search, $options: "i" } },
+            { systemName: { $regex: req.query.search, $options: "i" } },
+          ],
+        }
+      : {};
+
+  
+    const filters = {status:"active"};
+    if (req.query.status) {
+      filters.status = req.query.status||'active';
+    }
+   
+   if (req.query.installmentMin || req.query.installmentMax) {
+      filters["installmentPlans.value"] = {};
+      if (req.query.installmentMin) {
+        filters["installmentPlans.value"].$gte = Number(req.query.installmentMin);
+      }
+      if (req.query.installmentMax) {
+        filters["installmentPlans.value"].$lte = Number(req.query.installmentMax);
+      }
+    }
+
+   
+
+    let sort = {};
+    if (req.query.sort) {
+      const sortField = req.query.sort.replace(/Asc|Desc$/, "");
+      const sortOrder = req.query.sort.endsWith("Asc") ? 1 : -1;
+      sort[sortField] = sortOrder;
+    } else {
+      sort = { createdAt: -1 }; 
+    }
+
+   
+    const query = { ...searchQuery, ...filters };
+ console.log(sort)
+    const total = await Scheme.countDocuments(query);
+    const schemes = await Scheme.find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .populate("createdBy", "name email"); 
+
+    res.status(200).json({
+      success: true,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: schemes,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+module.exports = { getAllSchemes };
+
+
 const getSchemeById = async (req, res, next) => {
   try {
     const scheme = await Scheme.findById(req.params.id);
@@ -66,6 +136,7 @@ const deleteScheme = async (req, res, next) => {
 
 module.exports = {
   createScheme,
+  getAllSchemes,
   getSchemeById,
   deleteScheme,
 };

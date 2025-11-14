@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { createScheme, getSchemeById, deleteScheme } = require("../controllers/schemeController");
+const { createScheme, getSchemeById, deleteScheme, getAllSchemes } = require("../controllers/schemeController");
 const { checkRole, verifyJwt } = require("../middleware/auth");
 const multer = require("multer");
 const storage = multer.memoryStorage();
@@ -14,6 +14,7 @@ router.post(
   createScheme
 );
 
+router.get("/schemes", getAllSchemes);
 router.get("/getSchemeById/:id", getSchemeById);
 router.delete("/deleteScheme/:id", deleteScheme);
 module.exports = router;
