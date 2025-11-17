@@ -90,7 +90,6 @@ const getAllSchemes = async (req, res) => {
 
    
     const query = { ...searchQuery, ...filters };
- console.log(sort)
     const total = await Scheme.countDocuments(query);
     const schemes = await Scheme.find(query)
       .sort(sort)
@@ -111,7 +110,7 @@ const getAllSchemes = async (req, res) => {
   }
 };
 
-module.exports = { getAllSchemes };
+
 
 
 const getSchemeById = async (req, res, next) => {

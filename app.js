@@ -23,9 +23,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 const authRouter = require("./routes/authRouter");
 const schemeRouter = require("./routes/schemeRouter");
+const planRouter = require("./routes/subscriptionRouter");
 
 app.use("/api/auth", authRouter);
 app.use("/api/scheme", schemeRouter);
+app.use("/api/plan", planRouter);
 
 app.get("/api/health", async (req, res) => {
   try {
