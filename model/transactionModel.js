@@ -1,7 +1,6 @@
-import mongoose from "mongoose";
-import SchemeSubscriptionModel from "./schemeSubscriptionModel";
-import User from "./userModel";
-import Scheme from "./schemeModel";
+const mongoose = require("mongoose");
+const SchemeSubscriptionModel = require("./schemeSubscriptionModel");
+const User = require("./userModel");
 
 const TransactionSchema = new mongoose.Schema(
   {
@@ -17,12 +16,6 @@ const TransactionSchema = new mongoose.Schema(
       required: true,
     },
 
-    schemeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: Scheme,
-      required: true,
-    },
-
     installmentNumber: {
       type: Number,
       required: true,
@@ -34,8 +27,6 @@ const TransactionSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
-
-    
 
     paymentDate: {
       type: Date,
@@ -58,8 +49,6 @@ const TransactionSchema = new mongoose.Schema(
       enum: ["success", "pending", "failed"],
       default: "pending",
     },
-
-   
   },
   { timestamps: true }
 );
@@ -69,4 +58,5 @@ const TransactionSchema = new mongoose.Schema(
 // TransactionSchema.index({ subscriptionId: 1 });
 // TransactionSchema.index({ planId: 1 });
 
-export default mongoose.model("Transaction", TransactionSchema);
+const Transaction = mongoose.model("transaction", TransactionSchema);
+module.exports = Transaction;

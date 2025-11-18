@@ -24,10 +24,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 const authRouter = require("./routes/authRouter");
 const schemeRouter = require("./routes/schemeRouter");
 const planRouter = require("./routes/subscriptionRouter");
+const transactionRouter = require("./routes/transactionRouter");
 
 app.use("/api/auth", authRouter);
 app.use("/api/scheme", schemeRouter);
 app.use("/api/plan", planRouter);
+app.use("/api/transaction", transactionRouter);
 
 app.get("/api/health", async (req, res) => {
   try {
