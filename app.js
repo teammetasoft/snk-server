@@ -25,11 +25,13 @@ const authRouter = require("./routes/authRouter");
 const schemeRouter = require("./routes/schemeRouter");
 const planRouter = require("./routes/subscriptionRouter");
 const transactionRouter = require("./routes/transactionRouter");
+const userRouter = require("./routes/userRouter");
 
 app.use("/api/auth", authRouter);
 app.use("/api/scheme", schemeRouter);
 app.use("/api/plan", planRouter);
 app.use("/api/transaction", transactionRouter);
+app.use("/api/user", userRouter);
 
 app.get("/api/health", async (req, res) => {
   try {
